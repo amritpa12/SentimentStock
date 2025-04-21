@@ -3,16 +3,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-client = RESTClient()
+client = RESTClient("eiEA1YoxzZAlnrNQ0wp5oeyXZ3kaxYeO")
 
 # Set the date range
-start_date = "2024-06-01"
-end_date = "2024-09-04"
+start_date = "2024-07-05"
+end_date = "2024-07-09"
 
 # Fetch news and extract sentiment for 'CRWD'
 sentiment_count = []
 for day in pd.date_range(start=start_date, end=end_date):
-    daily_news = list(client.list_ticker_news("CRWD", published_utc=day.strftime("%Y-%m-%d"), limit=100))
+    daily_news = list(client.list_ticker_news("CRWD", published_utc=day.strftime("%Y-%m-%d"), limit=10))
+    #time.sleep(12)
     daily_sentiment = {
         'date': day.strftime("%Y-%m-%d"),
         'positive': 0,
