@@ -1,61 +1,48 @@
 from polygon import RESTClient
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+import csv
+import os
+from dotenv import load_dotenv, dotenv_values
+import openai
 
-client = RESTClient("eiEA1YoxzZAlnrNQ0wp5oeyXZ3kaxYeO")
+load_dotenv()
 
-# Set the date range
-start_date = "2024-07-05"
-end_date = "2024-07-09"
+# Initialize Polygon client
+client = RESTClient(os.getenv("polygonKey"))
+openai.api_key = ""
 
-# Fetch news and extract sentiment for 'CRWD'
-sentiment_count = []
-for day in pd.date_range(start=start_date, end=end_date):
-    daily_news = list(client.list_ticker_news("CRWD", published_utc=day.strftime("%Y-%m-%d"), limit=10))
-    #time.sleep(12)
-    daily_sentiment = {
-        'date': day.strftime("%Y-%m-%d"),
-        'positive': 0,
-        'negative': 0,
-        'neutral': 0
-    }
-    for article in daily_news:
-        if hasattr(article, 'insights') and article.insights:
-            for insight in article.insights:
-                if insight.sentiment == 'positive':
-                    daily_sentiment['positive'] += 1
-                elif insight.sentiment == 'negative':
-                    daily_sentiment['negative'] += 1
-                elif insight.sentiment == 'neutral':
-                    daily_sentiment['neutral'] += 1
-    sentiment_count.append(daily_sentiment)
 
-# Convert to DataFramesentiment_count
-df_sentiment = pd.DataFrame(sentiment_count)
+def sentimentToCSV(ticker_symbol, publish_date):
+    news_articles = client.list_ticker_news(
+        ticker_symbol,
+        params={"published_utc.gte": publish_date},
+        order="desc",
+        limit=1000
+    )
+    csv_file = f"{ticker_symbol}_news_sentiment.csv"
+    with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Title", "Sentiment", "Sentiment Reasoning", "URL"])
+        for article in news_articles:
+            writer.writerow([
+                article.title,
+                article.insights[0].sentiment,
+                article.insights[0].sentiment_reasoning,
+                article.article_url
+            ])
+    returnStatement = f"Data successfully exported to {csv_file}" 
+    return returnStatement
 
-# Convert 'date' column to datetime
-df_sentiment['date'] = pd.to_datetime(df_sentiment['date'])
 
-# Set the date as the index
-df_sentiment.set_index('date', inplace=True)
 
-# Plotting the data
-plt.figure(figsize=(20, 10))
-plt.plot(df_sentiment['positive'], label='Positive', color='green')
-plt.plot(df_sentiment['negative'], label='Negative', color='red')
-plt.plot(df_sentiment['neutral'], label='Neutral', color='grey', linestyle='--')
-plt.title('Sentiment Over Time')
-plt.xlabel('Date')
-plt.ylabel('Count')
-plt.legend()
-plt.grid(True)
 
-# Format the x-axis to display dates better
-plt.gca().xaxis.set_major_locator(mdates.WeekdayLocator(interval=1))  # Adjust interval as needed
-plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-plt.gcf().autofmt_xdate()  # Rotation
 
-# Saving the plot as an image file
-plt.savefig('sentiment_over_time.png')
-plt.show()
+
+
+
+
+
+
+ticker = "AAPL"
+datePublish = "2025-04-10" # Year - Month - Day 
+
+print(sentimentToCSV(ticker, datePublish))
