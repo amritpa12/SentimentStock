@@ -18,3 +18,7 @@ __pycache__/
 # IDE specific files
 .vscode/
 .idea/ 
+
+
+#LLM Checkpoints
+finbert-results/
